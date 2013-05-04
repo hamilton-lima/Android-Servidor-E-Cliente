@@ -20,9 +20,31 @@ public class Conexao implements Runnable {
 	private boolean ativo = true;
 	private Thread escutandoParaSempre;
 	private ConcurrentLinkedQueue<String> linhas;
+	private DepoisDeReceberDados depoisDeReceberDadosHandler;
 
+	/**
+	 * usado para criar objetos de conexao do lado cliente
+	 * 
+	 * @param conexao
+	 * @throws IOException
+	 */
 	public Conexao(Socket conexao) throws IOException {
+		this(conexao, null);
+	}
+
+	/**
+	 * usado para criar objetos de conexao do lado servidor
+	 * 
+	 * @param conexao
+	 * @param depoisDeReceberDadosHandler
+	 * @throws IOException
+	 */
+	public Conexao(Socket conexao,
+			DepoisDeReceberDados depoisDeReceberDadosHandler)
+			throws IOException {
 		this.conexao = conexao;
+		this.depoisDeReceberDadosHandler = depoisDeReceberDadosHandler;
+
 		leitor = new BufferedReader(new InputStreamReader(
 				conexao.getInputStream()));
 		escritor = new BufferedWriter(new OutputStreamWriter(
@@ -32,7 +54,6 @@ public class Conexao implements Runnable {
 		escutandoParaSempre = new Thread(this);
 		escutandoParaSempre.setPriority(Thread.MIN_PRIORITY);
 		escutandoParaSempre.start();
-
 	}
 
 	public String getIP() {
@@ -40,22 +61,6 @@ public class Conexao implements Runnable {
 			return conexao.getInetAddress().getHostAddress().toString();
 		}
 		return null;
-	}
-
-	public String eco() {
-
-		try {
-			String linha = linhas.poll();
-			Log.i(TAG, "<<" + linha);
-			if (linha != null) {
-				escritor.write("eco : " + linha);
-				escritor.flush();
-			}
-			return linha;
-		} catch (IOException e) {
-			Log.e(TAG, "erro lendo da conexao");
-			return null;
-		}
 	}
 
 	/**
@@ -66,12 +71,11 @@ public class Conexao implements Runnable {
 			try {
 				// bloqueante !!
 				String linha = leitor.readLine();
-				if (linha != null) {
-					linhas.add(linha);
 
-					// verifica se maximo de linhas foi alcancado
-					if (linhas.size() > Const.MAX_LINHAS_CLIENTE) {
-						linhas.poll();
+				// para cada linha nao nula chama o respectivo handler
+				if (linha != null) {
+					if (depoisDeReceberDadosHandler != null) {
+						depoisDeReceberDadosHandler.execute(this, linha);
 					}
 				}
 			} catch (IOException e) {
@@ -80,7 +84,7 @@ public class Conexao implements Runnable {
 		}
 
 	}
-	
+
 	public void adeus() {
 		if (conexao != null) {
 			try {
@@ -99,6 +103,15 @@ public class Conexao implements Runnable {
 		}
 
 		Log.i(TAG, "adeus() -- conexao CLIENTE encerrada.");
+	}
+
+	public void write(String string) {
+		try {
+			escritor.write(string);
+			escritor.flush();
+		} catch (IOException e) {
+			Log.e(Const.TAG, "erro escrevendo na conexao");
+		}
 	}
 
 }

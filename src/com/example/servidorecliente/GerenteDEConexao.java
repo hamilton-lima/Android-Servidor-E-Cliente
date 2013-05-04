@@ -6,6 +6,7 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -22,6 +23,16 @@ public class GerenteDEConexao implements Runnable {
 	}
 
 	private int porta;
+	private DepoisDeReceberDados depoisDeReceberDadosHandler;
+
+	public DepoisDeReceberDados getDepoisDeReceberDadosHandler() {
+		return depoisDeReceberDadosHandler;
+	}
+
+	public void setDepoisDeReceberDadosHandler(
+			DepoisDeReceberDados depoisDeReceberDadosHandler) {
+		this.depoisDeReceberDadosHandler = depoisDeReceberDadosHandler;
+	}
 
 	public int getPorta() {
 		return porta;
@@ -30,17 +41,18 @@ public class GerenteDEConexao implements Runnable {
 	private boolean ativo = true;
 	private ServerSocket servidor;
 	private ArrayList<Conexao> conexoes;
-	private Conexao cliente;
 
 	public ArrayList<Conexao> getConexoes() {
 		return conexoes;
 	}
 
-	public void iniciar() {
+	public void iniciarServidor() {
 
 		try {
 			servidor = new ServerSocket(porta);
-			Log.i(TAG, "--- endereco do servidor : " + getLocalIpAddress());
+			Log.i(TAG,
+					"--- endereco do servidor : "
+							+ RedeUtil.getLocalIpAddress());
 
 			ouvinte = new Thread(this);
 			ouvinte.start();
@@ -52,29 +64,6 @@ public class GerenteDEConexao implements Runnable {
 
 	}
 
-	private String getLocalIpAddress() {
-		try {
-			Enumeration<NetworkInterface> en = NetworkInterface
-					.getNetworkInterfaces();
-
-			while (en.hasMoreElements()) {
-				NetworkInterface intf = en.nextElement();
-				Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses();
-
-				while (enumIpAddr.hasMoreElements()) {
-
-					InetAddress inetAddress = enumIpAddr.nextElement();
-					if (!inetAddress.isLoopbackAddress()) {
-						return inetAddress.getHostAddress().toString();
-					}
-				}
-			}
-		} catch (SocketException ex) {
-			Log.e(TAG, "erro recuperando IP atual", ex);
-		}
-		return null;
-	}
-
 	public void run() {
 		while (ativo) {
 
@@ -83,7 +72,7 @@ public class GerenteDEConexao implements Runnable {
 				Log.i(TAG, "!! nova conexao : "
 						+ conexao.getInetAddress().getHostAddress().toString());
 
-				conexoes.add(new Conexao(conexao));
+				conexoes.add(new Conexao(conexao, depoisDeReceberDadosHandler));
 
 			} catch (IOException e) {
 				Log.e(TAG, "erro ao aguardar nova conexao", e);
@@ -102,9 +91,6 @@ public class GerenteDEConexao implements Runnable {
 			}
 		}
 
-		// interrompe auto conexao
-		cliente.adeus();
-
 		// interrompe conexoes dos clientes
 		ArrayList<Conexao> conexoes = getConexoes();
 		for (Conexao conexao : conexoes) {
@@ -120,10 +106,6 @@ public class GerenteDEConexao implements Runnable {
 		}
 
 		Log.i(TAG, "adeus() -- conexao encerrada.");
-	}
-
-	public void setAutoConexao(Conexao cliente) {
-		this.cliente = cliente;
 	}
 
 }
