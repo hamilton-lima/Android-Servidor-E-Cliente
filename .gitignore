@@ -3,3 +3,5 @@ bin/
 
 libs/
 *.prefs
+
+gen/com/example/servidorecliente/R.java
