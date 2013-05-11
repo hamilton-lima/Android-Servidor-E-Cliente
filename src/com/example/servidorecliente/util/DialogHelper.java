@@ -1,4 +1,4 @@
-package com.example.servidorecliente;
+package com.example.servidorecliente.util;
 
 import java.net.UnknownHostException;
 

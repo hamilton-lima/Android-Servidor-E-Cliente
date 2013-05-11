@@ -1,5 +1,8 @@
 package com.example.servidorecliente;
 
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -8,41 +11,59 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.example.servidorecliente.bean.Jogador;
+import com.example.servidorecliente.rede.ControleDeUsuariosCliente;
+import com.example.servidorecliente.rede.Protocolo;
+
 public class ViewDeRede extends View implements Runnable {
 	private Paint paint;
-	private int w;
-	private int h;
 	private long time = 30;
 
 	private Conexao cliente;
-	private GerenteDEConexao gerente;
 	private Context context;
 
-	public ViewDeRede(Context context, GerenteDEConexao gerente) {
+	private ControleDeUsuariosCliente tratadorDeDadosDoCliente;
+	private int y;
+	private int x;
+	private float raio = 20;
+	private int margem = 5;
+
+	public ViewDeRede(Context context, Conexao cliente,
+			ControleDeUsuariosCliente tratadorDeDadosDoCliente) {
+
 		super(context);
 
-		this.gerente = gerente;
+		this.cliente = cliente;
 		this.context = context;
+		this.tratadorDeDadosDoCliente = tratadorDeDadosDoCliente;
 
 		paint = new Paint();
 		paint.setColor(Color.BLACK);
 		paint.setTextSize(20);
 
+		cliente.write(Protocolo.PROTOCOL_ID + "," + cliente.getId() + "," + x
+				+ "," + y);
+
 		Thread thread = new Thread(this);
 		thread.start();
 	}
 
-	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-		super.onSizeChanged(w, h, oldw, oldh);
-
-		this.w = getWidth();
-		this.h = getHeight();
-	}
-
 	public void draw(Canvas canvas) {
 		super.draw(canvas);
-		canvas.drawText("conexoes : " + gerente.getConexoes().size(), 10, 30,
-				paint);
+
+		ConcurrentHashMap<String, Jogador> jogadores = tratadorDeDadosDoCliente
+				.getJogadores();
+
+		Iterator<String> iterator = jogadores.keySet().iterator();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			Jogador jogador = jogadores.get(key);
+
+			canvas.drawCircle(jogador.getX(), jogador.getY(), raio, paint);
+			canvas.drawText("<" + jogador.getNome() + ">", jogador.getX()
+					- raio, jogador.getY() + raio + margem  , paint);
+		}
+
 	}
 
 	public void run() {
@@ -67,8 +88,10 @@ public class ViewDeRede extends View implements Runnable {
 		int action = event.getAction();
 
 		if (action == MotionEvent.ACTION_DOWN) {
-
-
+			int id = event.getPointerId(event.getActionIndex());
+			x = (int) event.getX(id);
+			y = (int) event.getY(id);
+			cliente.write(Protocolo.PROTOCOL_MOVE + "," + x + "," + y);
 		}
 		return super.onTouchEvent(event);
 	}

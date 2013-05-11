@@ -11,6 +11,12 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import com.example.servidorecliente.rede.ControleDeUsuariosCliente;
+import com.example.servidorecliente.rede.DepoisDeReceberDados;
+import com.example.servidorecliente.rede.TratadorDeRedeECO;
+import com.example.servidorecliente.util.DialogHelper;
+import com.example.servidorecliente.util.RedeUtil;
+
 public class MainActivity extends Activity {
 
 	public static final String TAG = "rede";
@@ -28,7 +34,6 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		viewDoJogo = new ViewDeRede(this, gerente);
 		editIP = (EditText) findViewById(R.id.editText1);
 		editUsuario = (EditText) findViewById(R.id.editText2);
 	}
@@ -42,12 +47,20 @@ public class MainActivity extends Activity {
 			}
 
 			gerente = new GerenteDEConexao(PORTA_PADRAO);
-			gerente.iniciarServidor();
+			gerente.iniciarServidor(new TratadorDeRedeECO());
+
+			DepoisDeReceberDados tratadorDeDadosDoCliente = new ControleDeUsuariosCliente();
+
 			Socket s = new Socket("127.0.0.1", gerente.getPorta());
-			conexao = new Conexao(s);
+			conexao = new Conexao(s, usuario, tratadorDeDadosDoCliente);
 
 			DialogHelper.message(this,
 					"endereco do servidor : " + RedeUtil.getLocalIpAddress());
+
+			// garante que view possa recuperar a lista de usuarios atual e
+			// enviar dados pela rede
+			viewDoJogo = new ViewDeRede(this, conexao,
+					(ControleDeUsuariosCliente) tratadorDeDadosDoCliente);
 
 			setContentView(viewDoJogo);
 
@@ -81,8 +94,16 @@ public class MainActivity extends Activity {
 					.getWindowToken(), 0);
 
 			try {
+				DepoisDeReceberDados tratadorDeDadosDoCliente = new ControleDeUsuariosCliente();
+
 				Socket s = new Socket(ip, gerente.getPorta());
-				conexao = new Conexao(s);
+				conexao = new Conexao(s, usuario, tratadorDeDadosDoCliente);
+
+				// garante que view possa recuperar a lista de usuarios atual e
+				// enviar dados pela rede
+				viewDoJogo = new ViewDeRede(this, conexao,
+						(ControleDeUsuariosCliente) tratadorDeDadosDoCliente);
+
 				setContentView(viewDoJogo);
 
 			} catch (UnknownHostException e) {

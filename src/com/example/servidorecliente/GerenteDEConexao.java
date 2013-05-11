@@ -10,6 +10,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
+import com.example.servidorecliente.rede.DepoisDeReceberDados;
+import com.example.servidorecliente.util.RedeUtil;
+
 import android.util.Log;
 
 public class GerenteDEConexao implements Runnable {
@@ -46,9 +49,17 @@ public class GerenteDEConexao implements Runnable {
 		return conexoes;
 	}
 
-	public void iniciarServidor() {
+	public void iniciarServidor(DepoisDeReceberDados depoisDeReceberDadosHandler) {
 
+		if (depoisDeReceberDadosHandler == null) {
+			throw new RuntimeException(
+					"depoisDeReceberDadosHandler precisa ser informado");
+		}
+		
 		try {
+
+			this.depoisDeReceberDadosHandler = depoisDeReceberDadosHandler;
+
 			servidor = new ServerSocket(porta);
 			Log.i(TAG,
 					"--- endereco do servidor : "
@@ -72,7 +83,7 @@ public class GerenteDEConexao implements Runnable {
 				Log.i(TAG, "!! nova conexao : "
 						+ conexao.getInetAddress().getHostAddress().toString());
 
-				conexoes.add(new Conexao(conexao, depoisDeReceberDadosHandler));
+				conexoes.add(new Conexao(conexao, null, depoisDeReceberDadosHandler));
 
 			} catch (IOException e) {
 				Log.e(TAG, "erro ao aguardar nova conexao", e);

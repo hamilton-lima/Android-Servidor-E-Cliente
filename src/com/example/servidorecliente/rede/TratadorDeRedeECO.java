@@ -1,4 +1,7 @@
-package com.example.servidorecliente;
+package com.example.servidorecliente.rede;
+
+import com.example.servidorecliente.Conexao;
+import com.example.servidorecliente.Const;
 
 import android.util.Log;
 

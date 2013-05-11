@@ -8,6 +8,8 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.example.servidorecliente.rede.DepoisDeReceberDados;
+
 import android.util.Log;
 
 public class Conexao implements Runnable {
@@ -15,6 +17,7 @@ public class Conexao implements Runnable {
 	private static final String TAG = "conexao";
 	private BufferedReader leitor;
 	private BufferedWriter escritor;
+	private String id;
 
 	private Socket conexao;
 	private boolean ativo = true;
@@ -22,28 +25,29 @@ public class Conexao implements Runnable {
 	private ConcurrentLinkedQueue<String> linhas;
 	private DepoisDeReceberDados depoisDeReceberDadosHandler;
 
-	/**
-	 * usado para criar objetos de conexao do lado cliente
-	 * 
-	 * @param conexao
-	 * @throws IOException
-	 */
-	public Conexao(Socket conexao) throws IOException {
-		this(conexao, null);
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	/**
 	 * usado para criar objetos de conexao do lado servidor
 	 * 
 	 * @param conexao
+	 * @param usuario
 	 * @param depoisDeReceberDadosHandler
 	 * @throws IOException
 	 */
-	public Conexao(Socket conexao,
+	public Conexao(Socket conexao, String id,
 			DepoisDeReceberDados depoisDeReceberDadosHandler)
 			throws IOException {
+
 		this.conexao = conexao;
 		this.depoisDeReceberDadosHandler = depoisDeReceberDadosHandler;
+		this.id = id;
 
 		leitor = new BufferedReader(new InputStreamReader(
 				conexao.getInputStream()));
