@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
 			try {
 				DepoisDeReceberDados tratadorDeDadosDoCliente = new ControleDeUsuariosCliente();
 
-				Socket s = new Socket(ip, gerente.getPorta());
+				Socket s = new Socket(ip, PORTA_PADRAO);
 				conexao = new Conexao(s, usuario, tratadorDeDadosDoCliente);
 
 				// garante que view possa recuperar a lista de usuarios atual e
