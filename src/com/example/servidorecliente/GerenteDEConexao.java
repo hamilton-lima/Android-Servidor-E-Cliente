@@ -55,7 +55,7 @@ public class GerenteDEConexao implements Runnable {
 			throw new RuntimeException(
 					"depoisDeReceberDadosHandler precisa ser informado");
 		}
-		
+
 		try {
 
 			this.depoisDeReceberDadosHandler = depoisDeReceberDadosHandler;
@@ -83,7 +83,9 @@ public class GerenteDEConexao implements Runnable {
 				Log.i(TAG, "!! nova conexao : "
 						+ conexao.getInetAddress().getHostAddress().toString());
 
-				conexoes.add(new Conexao(conexao, null, depoisDeReceberDadosHandler));
+				conexoes.add(new Conexao(conexao, "conexao-servidor:"
+						+ conexao.getRemoteSocketAddress(),
+						depoisDeReceberDadosHandler));
 
 			} catch (IOException e) {
 				Log.e(TAG, "erro ao aguardar nova conexao", e);

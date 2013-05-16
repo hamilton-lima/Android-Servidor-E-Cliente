@@ -5,17 +5,20 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import com.example.servidorecliente.rede.ControleDeUsuariosCliente;
+import com.example.servidorecliente.rede.ControleDeUsuariosServidor;
 import com.example.servidorecliente.rede.DepoisDeReceberDados;
-import com.example.servidorecliente.rede.TratadorDeRedeECO;
 import com.example.servidorecliente.util.DialogHelper;
 import com.example.servidorecliente.util.RedeUtil;
+import com.example.servidorecliente.util.ViewUtil;
 
 public class MainActivity extends Activity {
 
@@ -36,26 +39,31 @@ public class MainActivity extends Activity {
 
 		editIP = (EditText) findViewById(R.id.editText1);
 		editUsuario = (EditText) findViewById(R.id.editText2);
+
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 	}
 
 	public void criarServidor(View sender) {
 
 		try {
+			ViewUtil.closeKeyboard(this);
 
 			if (gerente != null) {
 				gerente.adeus();
 			}
 
 			gerente = new GerenteDEConexao(PORTA_PADRAO);
-			gerente.iniciarServidor(new TratadorDeRedeECO());
+			// gerente.iniciarServidor(new TratadorDeRedeECO());
+			gerente.iniciarServidor(new ControleDeUsuariosServidor());
 
 			DepoisDeReceberDados tratadorDeDadosDoCliente = new ControleDeUsuariosCliente();
 
-			Socket s = new Socket("127.0.0.1", gerente.getPorta());
+			Socket s = new Socket("127.0.0.1", PORTA_PADRAO);
 			conexao = new Conexao(s, usuario, tratadorDeDadosDoCliente);
 
-			DialogHelper.message(this,
-					"endereco do servidor : " + RedeUtil.getLocalIpAddress());
+			String serverIp = RedeUtil.getLocalIpAddress();
+			DialogHelper.message(this, "endereco do servidor : " + serverIp);
+			setTitle("servidor : " + serverIp);
 
 			// garante que view possa recuperar a lista de usuarios atual e
 			// enviar dados pela rede
@@ -76,7 +84,9 @@ public class MainActivity extends Activity {
 	}
 
 	public void salvarUsuario(View sender) {
+		ViewUtil.closeKeyboard(this);
 		usuario = editUsuario.getText().toString();
+		Log.i(TAG, "usuario salvo:" + usuario);
 	}
 
 	public void conectar(View sender) {
@@ -88,10 +98,7 @@ public class MainActivity extends Activity {
 					"endereço do servidor não pode ser vazio");
 
 		} else {
-			// fecha teclado
-			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-			imm.hideSoftInputFromWindow(getWindow().getCurrentFocus()
-					.getWindowToken(), 0);
+			ViewUtil.closeKeyboard(this);
 
 			try {
 				DepoisDeReceberDados tratadorDeDadosDoCliente = new ControleDeUsuariosCliente();
@@ -119,7 +126,6 @@ public class MainActivity extends Activity {
 
 	}
 
-	@Override
 	protected void onDestroy() {
 
 		if (gerente != null) {
@@ -131,6 +137,29 @@ public class MainActivity extends Activity {
 		}
 
 		super.onDestroy();
+	}
+
+	/**
+	 * @see http
+	 *      ://stackoverflow.com/questions/2257963/how-to-show-a-dialog-to-confirm
+	 *      -that-the-user-wishes-to-exit-an-android-activity
+	 */
+	public void onBackPressed() {
+		new AlertDialog.Builder(this)
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setTitle("abandonando o barco")
+				.setMessage(
+						"Tem certeza que vai embora ? vou sentir sua falta ...")
+				.setPositiveButton("Adeus",
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which) {
+								finish();
+							}
+
+						}).setNegativeButton("Então tá, fico + um pouco", null)
+				.show();
 	}
 
 }

@@ -71,6 +71,8 @@ public class Conexao implements Runnable {
 	 * le continuamente da conexao
 	 */
 	public void run() {
+		Log.i(TAG,"conexao esperando por dados : " + id);
+		
 		while (ativo) {
 			try {
 				// bloqueante !!
@@ -78,6 +80,7 @@ public class Conexao implements Runnable {
 
 				// para cada linha nao nula chama o respectivo handler
 				if (linha != null) {
+					Log.i(TAG, "linha recebida: " + linha );
 					if (depoisDeReceberDadosHandler != null) {
 						depoisDeReceberDadosHandler.execute(this, linha);
 					}
@@ -110,8 +113,9 @@ public class Conexao implements Runnable {
 	}
 
 	public void write(String string) {
+		Log.i(TAG, "cliente.write:" + string);
 		try {
-			escritor.write(string);
+			escritor.write(string + "\n");
 			escritor.flush();
 		} catch (IOException e) {
 			Log.e(Const.TAG, "erro escrevendo na conexao");

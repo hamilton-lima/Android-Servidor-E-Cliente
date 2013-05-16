@@ -13,36 +13,43 @@ import android.view.View;
 
 import com.example.servidorecliente.bean.Jogador;
 import com.example.servidorecliente.rede.ControleDeUsuariosCliente;
+import com.example.servidorecliente.rede.DadosDoCliente;
 import com.example.servidorecliente.rede.Protocolo;
 
 public class ViewDeRede extends View implements Runnable {
+	private static final String TAG = "view-rede";
+	private static final int UPDATE_TIME = 100;
 	private Paint paint;
 	private long time = 30;
 
-	private Conexao cliente;
-	private Context context;
-
 	private ControleDeUsuariosCliente tratadorDeDadosDoCliente;
-	private int y;
-	private int x;
+	private DadosDoCliente dadosDoCliente;
+
 	private float raio = 20;
 	private int margem = 5;
+	private int fontSize = 20;
 
 	public ViewDeRede(Context context, Conexao cliente,
 			ControleDeUsuariosCliente tratadorDeDadosDoCliente) {
 
 		super(context);
 
-		this.cliente = cliente;
-		this.context = context;
+		// envia estado atual do cliente para o servidor
+		dadosDoCliente = new DadosDoCliente(cliente, UPDATE_TIME);
+		Thread threadDados = new Thread(dadosDoCliente);
+		threadDados.start();
+
 		this.tratadorDeDadosDoCliente = tratadorDeDadosDoCliente;
 
 		paint = new Paint();
 		paint.setColor(Color.BLACK);
-		paint.setTextSize(20);
+		paint.setTextSize(fontSize);
 
-		cliente.write(Protocolo.PROTOCOL_ID + "," + cliente.getId() + "," + x
-				+ "," + y);
+		cliente.write(Protocolo.PROTOCOL_ID + "," + cliente.getId() + ",0,0");
+
+		setFocusableInTouchMode(true);
+		setClickable(true);
+		setLongClickable(true);
 
 		Thread thread = new Thread(this);
 		thread.start();
@@ -61,7 +68,7 @@ public class ViewDeRede extends View implements Runnable {
 
 			canvas.drawCircle(jogador.getX(), jogador.getY(), raio, paint);
 			canvas.drawText("<" + jogador.getNome() + ">", jogador.getX()
-					- raio, jogador.getY() + raio + margem  , paint);
+					- raio, jogador.getY() + raio + margem + fontSize, paint);
 		}
 
 	}
@@ -86,13 +93,12 @@ public class ViewDeRede extends View implements Runnable {
 
 	public boolean onTouchEvent(MotionEvent event) {
 		int action = event.getAction();
+		Log.i(TAG, "ontouch: " + action);
 
-		if (action == MotionEvent.ACTION_DOWN) {
-			int id = event.getPointerId(event.getActionIndex());
-			x = (int) event.getX(id);
-			y = (int) event.getY(id);
-			cliente.write(Protocolo.PROTOCOL_MOVE + "," + x + "," + y);
-		}
+		int id = event.getPointerId(event.getActionIndex());
+		dadosDoCliente.setX((int) event.getX(id));
+		dadosDoCliente.setY((int) event.getY(id));
+
 		return super.onTouchEvent(event);
 	}
 
