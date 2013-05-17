@@ -36,7 +36,7 @@ public class ViewDeRede extends View implements Runnable {
 
 		// envia estado atual do cliente para o servidor
 		dadosDoCliente = new DadosDoCliente(cliente, UPDATE_TIME);
-		Thread threadDados = new Thread(dadosDoCliente);
+		Thread threadDados = ElMatador.getInstance().newThread(dadosDoCliente);
 		threadDados.start();
 
 		this.tratadorDeDadosDoCliente = tratadorDeDadosDoCliente;
@@ -51,7 +51,7 @@ public class ViewDeRede extends View implements Runnable {
 		setClickable(true);
 		setLongClickable(true);
 
-		Thread thread = new Thread(this);
+		Thread thread = ElMatador.getInstance().newThread(this);
 		thread.start();
 	}
 

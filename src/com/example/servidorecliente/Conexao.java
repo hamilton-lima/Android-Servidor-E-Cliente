@@ -55,8 +55,7 @@ public class Conexao implements Runnable {
 				conexao.getOutputStream()));
 
 		linhas = new ConcurrentLinkedQueue<String>();
-		escutandoParaSempre = new Thread(this);
-		escutandoParaSempre.setPriority(Thread.MIN_PRIORITY);
+		escutandoParaSempre = ElMatador.getInstance().newThread(this);
 		escutandoParaSempre.start();
 	}
 

@@ -65,7 +65,7 @@ public class GerenteDEConexao implements Runnable {
 					"--- endereco do servidor : "
 							+ RedeUtil.getLocalIpAddress());
 
-			ouvinte = new Thread(this);
+			ouvinte = ElMatador.getInstance().newThread(this);
 			ouvinte.start();
 
 		} catch (IOException e) {

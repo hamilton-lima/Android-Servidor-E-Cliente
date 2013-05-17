@@ -136,11 +136,13 @@ public class MainActivity extends Activity {
 			conexao.adeus();
 		}
 
+		ElMatador.getInstance().killThenAll();
+
 		super.onDestroy();
 	}
 
 	/**
-	 * @see http
+	 * @see http 
 	 *      ://stackoverflow.com/questions/2257963/how-to-show-a-dialog-to-confirm
 	 *      -that-the-user-wishes-to-exit-an-android-activity
 	 */
