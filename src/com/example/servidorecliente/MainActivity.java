@@ -16,11 +16,12 @@ import android.widget.EditText;
 import com.example.servidorecliente.rede.ControleDeUsuariosCliente;
 import com.example.servidorecliente.rede.ControleDeUsuariosServidor;
 import com.example.servidorecliente.rede.DepoisDeReceberDados;
+import com.example.servidorecliente.rede.Killable;
 import com.example.servidorecliente.util.DialogHelper;
 import com.example.servidorecliente.util.RedeUtil;
 import com.example.servidorecliente.util.ViewUtil;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements Killable {
 
 	public static final String TAG = "rede";
 	private static final int PORTA_PADRAO = 2121;
@@ -49,10 +50,11 @@ public class MainActivity extends Activity {
 			ViewUtil.closeKeyboard(this);
 
 			if (gerente != null) {
-				gerente.adeus();
+				gerente.killMeSoftly();
 			}
 
 			gerente = new GerenteDEConexao(PORTA_PADRAO);
+
 			// gerente.iniciarServidor(new TratadorDeRedeECO());
 			gerente.iniciarServidor(new ControleDeUsuariosServidor());
 
@@ -126,27 +128,14 @@ public class MainActivity extends Activity {
 
 	}
 
-	protected void onDestroy() {
-
-		if (gerente != null) {
-			gerente.adeus();
-		}
-
-		if (conexao != null) {
-			conexao.adeus();
-		}
-
-		ElMatador.getInstance().killThenAll();
-
-		super.onDestroy();
-	}
-
 	/**
 	 * @see http 
 	 *      ://stackoverflow.com/questions/2257963/how-to-show-a-dialog-to-confirm
 	 *      -that-the-user-wishes-to-exit-an-android-activity
 	 */
 	public void onBackPressed() {
+		Log.i(TAG,"--------- back pressed");
+
 		new AlertDialog.Builder(this)
 				.setIcon(android.R.drawable.ic_dialog_alert)
 				.setTitle("abandonando o barco")
@@ -154,14 +143,21 @@ public class MainActivity extends Activity {
 						"Tem certeza que vai embora ? vou sentir sua falta ...")
 				.setPositiveButton("Adeus",
 						new DialogInterface.OnClickListener() {
-							@Override
 							public void onClick(DialogInterface dialog,
 									int which) {
-								finish();
+								killMeSoftly();
 							}
 
 						}).setNegativeButton("Então tá, fico + um pouco", null)
 				.show();
+	}
+
+	/**
+	 * realiza limpeza dos threads em funcionamento
+	 */
+	public void killMeSoftly() {
+		ElMatador.getInstance().killThenAll();
+		finish();
 	}
 
 }

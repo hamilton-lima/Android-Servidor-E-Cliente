@@ -8,11 +8,12 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.example.servidorecliente.rede.DepoisDeReceberDados;
-
 import android.util.Log;
 
-public class Conexao implements Runnable {
+import com.example.servidorecliente.rede.DepoisDeReceberDados;
+import com.example.servidorecliente.rede.Killable;
+
+public class Conexao implements Runnable, Killable {
 
 	private static final String TAG = "conexao";
 	private BufferedReader leitor;
@@ -22,7 +23,6 @@ public class Conexao implements Runnable {
 	private Socket conexao;
 	private boolean ativo = true;
 	private Thread escutandoParaSempre;
-	private ConcurrentLinkedQueue<String> linhas;
 	private DepoisDeReceberDados depoisDeReceberDadosHandler;
 
 	public String getId() {
@@ -48,14 +48,14 @@ public class Conexao implements Runnable {
 		this.conexao = conexao;
 		this.depoisDeReceberDadosHandler = depoisDeReceberDadosHandler;
 		this.id = id;
+		ElMatador.getInstance().add(this);
 
 		leitor = new BufferedReader(new InputStreamReader(
 				conexao.getInputStream()));
 		escritor = new BufferedWriter(new OutputStreamWriter(
 				conexao.getOutputStream()));
 
-		linhas = new ConcurrentLinkedQueue<String>();
-		escutandoParaSempre = ElMatador.getInstance().newThread(this);
+		escutandoParaSempre = new Thread(this);
 		escutandoParaSempre.start();
 	}
 
@@ -70,8 +70,8 @@ public class Conexao implements Runnable {
 	 * le continuamente da conexao
 	 */
 	public void run() {
-		Log.i(TAG,"conexao esperando por dados : " + id);
-		
+		Log.i(TAG, "conexao esperando por dados : " + id);
+
 		while (ativo) {
 			try {
 				// bloqueante !!
@@ -79,7 +79,7 @@ public class Conexao implements Runnable {
 
 				// para cada linha nao nula chama o respectivo handler
 				if (linha != null) {
-					Log.i(TAG, "linha recebida: " + linha );
+					Log.i(TAG, "linha recebida: " + linha);
 					if (depoisDeReceberDadosHandler != null) {
 						depoisDeReceberDadosHandler.execute(this, linha);
 					}
@@ -91,7 +91,7 @@ public class Conexao implements Runnable {
 
 	}
 
-	public void adeus() {
+	public void killMeSoftly() {
 		if (conexao != null) {
 			try {
 				conexao.close();

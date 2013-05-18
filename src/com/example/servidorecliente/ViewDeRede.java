@@ -14,9 +14,10 @@ import android.view.View;
 import com.example.servidorecliente.bean.Jogador;
 import com.example.servidorecliente.rede.ControleDeUsuariosCliente;
 import com.example.servidorecliente.rede.DadosDoCliente;
+import com.example.servidorecliente.rede.Killable;
 import com.example.servidorecliente.rede.Protocolo;
 
-public class ViewDeRede extends View implements Runnable {
+public class ViewDeRede extends View implements Runnable, Killable {
 	private static final String TAG = "view-rede";
 	private static final int UPDATE_TIME = 100;
 	private Paint paint;
@@ -28,15 +29,17 @@ public class ViewDeRede extends View implements Runnable {
 	private float raio = 20;
 	private int margem = 5;
 	private int fontSize = 20;
+	private boolean ativo = true;
 
 	public ViewDeRede(Context context, Conexao cliente,
 			ControleDeUsuariosCliente tratadorDeDadosDoCliente) {
 
 		super(context);
+		ElMatador.getInstance().add(this);
 
 		// envia estado atual do cliente para o servidor
 		dadosDoCliente = new DadosDoCliente(cliente, UPDATE_TIME);
-		Thread threadDados = ElMatador.getInstance().newThread(dadosDoCliente);
+		Thread threadDados = new Thread(dadosDoCliente);
 		threadDados.start();
 
 		this.tratadorDeDadosDoCliente = tratadorDeDadosDoCliente;
@@ -51,7 +54,7 @@ public class ViewDeRede extends View implements Runnable {
 		setClickable(true);
 		setLongClickable(true);
 
-		Thread thread = ElMatador.getInstance().newThread(this);
+		Thread thread = new Thread(this);
 		thread.start();
 	}
 
@@ -75,7 +78,7 @@ public class ViewDeRede extends View implements Runnable {
 
 	public void run() {
 
-		while (true) {
+		while (ativo) {
 			try {
 				Thread.sleep(time);
 			} catch (InterruptedException e) {
@@ -100,6 +103,10 @@ public class ViewDeRede extends View implements Runnable {
 		dadosDoCliente.setY((int) event.getY(id));
 
 		return super.onTouchEvent(event);
+	}
+
+	public void killMeSoftly() {
+		ativo = false;
 	}
 
 }

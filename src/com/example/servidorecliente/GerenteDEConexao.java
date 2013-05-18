@@ -1,21 +1,17 @@
 package com.example.servidorecliente;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Enumeration;
-
-import com.example.servidorecliente.rede.DepoisDeReceberDados;
-import com.example.servidorecliente.util.RedeUtil;
 
 import android.util.Log;
 
-public class GerenteDEConexao implements Runnable {
+import com.example.servidorecliente.rede.DepoisDeReceberDados;
+import com.example.servidorecliente.rede.Killable;
+import com.example.servidorecliente.util.RedeUtil;
+
+public class GerenteDEConexao implements Runnable, Killable {
 
 	private static final String TAG = "gerente de conexao";
 	private Thread ouvinte;
@@ -23,6 +19,7 @@ public class GerenteDEConexao implements Runnable {
 	public GerenteDEConexao(int porta) {
 		this.porta = porta;
 		conexoes = new ArrayList<Conexao>();
+		ElMatador.getInstance().add(this);
 	}
 
 	private int porta;
@@ -65,7 +62,7 @@ public class GerenteDEConexao implements Runnable {
 					"--- endereco do servidor : "
 							+ RedeUtil.getLocalIpAddress());
 
-			ouvinte = ElMatador.getInstance().newThread(this);
+			ouvinte = new Thread(this);
 			ouvinte.start();
 
 		} catch (IOException e) {
@@ -95,7 +92,7 @@ public class GerenteDEConexao implements Runnable {
 		}
 	}
 
-	public void adeus() {
+	public void killMeSoftly() {
 		if (servidor != null) {
 			try {
 				servidor.close();
@@ -107,7 +104,7 @@ public class GerenteDEConexao implements Runnable {
 		// interrompe conexoes dos clientes
 		ArrayList<Conexao> conexoes = getConexoes();
 		for (Conexao conexao : conexoes) {
-			conexao.adeus();
+			conexao.killMeSoftly();
 		}
 
 		ativo = false;
@@ -120,5 +117,6 @@ public class GerenteDEConexao implements Runnable {
 
 		Log.i(TAG, "adeus() -- conexao encerrada.");
 	}
+
 
 }
